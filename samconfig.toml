@@ -1,0 +1,18 @@
+version = 0.1
+[primary.deploy.parameters]
+stack_name = "stop-multi-region-failover-api"
+resolve_s3 = true
+s3_prefix = "stop-multi-region-failover-api"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AlarmRegion=\"us-west-2\" DomainName=\"example.com\" Stage=\"prod\" FailoverType=\"PRIMARY\""
+image_repositories = []
+
+[secondary.deploy.parameters]
+stack_name = "stop-multi-region-failover-api"
+resolve_s3 = true
+s3_prefix = "stop-multi-region-failover-api"
+region = "us-west-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AlarmRegion=\"\" AlarmName=\"\" DomainName=\"example.com\" Stage=\"prod\" FailoverType=\"SECONDARY\""
+image_repositories = []

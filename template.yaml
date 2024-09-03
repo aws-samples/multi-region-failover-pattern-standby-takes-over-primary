@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless patterns - AWS multi-regionfailover using stand by takes over primary pattern
+
+Parameters:
+
+  AlarmRegion:
+    Type: String
+
+  AlarmName:
+    Type: String
+
+  PublicHostedZoneId:
+    Type: String
+
+  DomainName:
+    Type: String
+    Default: stop.mydomain.com
+
+  CertificateArn:
+    Type: String
+
+  Stage:
+    Type: String
+    Default: prod
+
+  FailoverType:
+    Type: String
+    Default: PRIMARY
+    AllowedValues:
+      - PRIMARY
+      - SECONDARY
+
+Conditions:
+  isPrimaryRegion: !Equals [!Ref FailoverType, PRIMARY]
+  isSecondaryRegion: !Equals [!Ref FailoverType, SECONDARY]
+
+Resources:
+
+  FailoverToSecondaryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: isSecondaryRegion
+    Properties:
+      AlarmDescription: 'This alarm will be used to trigger Route53 failover to the secondary record'
+      MetricName: FailoverToSecondary
+      Namespace: StopPattern
+      Statistic: Maximum
+      Period: 60
+      Threshold: 1
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: ignore
+      Dimensions:
+        - Name: service
+          Value: stop-demo
+
+  PrimaryHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    Condition: isPrimaryRegion
+    Properties:
+      HealthCheckConfig:
+        Type: CLOUDWATCH_METRIC
+        InsufficientDataHealthStatus: LastKnownStatus
+        Inverted: false
+        AlarmIdentifier:
+          Region: !Ref AlarmRegion
+          Name: !Ref AlarmName
+      HealthCheckTags: 
+        - Key: "Name"
+          Value: "HC-Initiate-Disaster-Recovery"
+
+  #Lambda function
+  StopLambdaRegionalApi:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Handler: index.lambda_handler
+      InlineCode: |
+        import json
+        import os
+
+        def lambda_handler(event, context):
+            return {
+        "statusCode": 200,
+        "body": json.dumps({
+          "service" : "stop-demo",
+          "region" : os.environ['AWS_REGION']}),
+        }
+      Runtime: python3.9
+      Events:
+        HelloWorld:
+          Type: Api 
+          Properties: 
+            Path: /
+            Method: get
+            RestApiId:
+              Ref: ApiRegional
+              
+  # REST Regional API
+  ApiRegional:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: stop-demo
+      StageName: !Ref Stage
+      EndpointConfiguration: REGIONAL
+
+  # Custom domains
+  CustomDomainRegional:
+    Type: AWS::ApiGatewayV2::DomainName
+    DependsOn:
+      - ApiRegional
+    Properties:
+      DomainName: !Ref DomainName
+      DomainNameConfigurations:
+      - SecurityPolicy: TLS_1_2
+        CertificateArn: !Ref CertificateArn
+        EndpointType: REGIONAL
+
+  MappingRegional:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DependsOn:
+      - CustomDomainRegional
+    Properties:
+      DomainName: !Ref DomainName
+      ApiId: !Ref ApiRegional
+      Stage: !Ref Stage
+
+  PrimaryRoute53AliasRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: isPrimaryRegion
+    DependsOn:
+      - CustomDomainRegional
+    Properties:
+      Name: !Ref DomainName
+      Type: A
+      Failover: !Ref FailoverType
+      SetIdentifier: "1"
+      HealthCheckId: !Ref PrimaryHealthCheck
+      HostedZoneId: !Ref PublicHostedZoneId
+      AliasTarget:
+        DNSName: !GetAtt CustomDomainRegional.RegionalDomainName
+        HostedZoneId: !GetAtt CustomDomainRegional.RegionalHostedZoneId
+        EvaluateTargetHealth: true
+
+  SecondaryRoute53AliasRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: isSecondaryRegion
+    DependsOn:
+      - CustomDomainRegional
+    Properties:
+      Name: !Ref DomainName
+      Type: A
+      Failover: !Ref FailoverType
+      SetIdentifier: "2"
+      HostedZoneId: !Ref PublicHostedZoneId
+      AliasTarget:
+        DNSName: !GetAtt CustomDomainRegional.RegionalDomainName
+        HostedZoneId: !GetAtt CustomDomainRegional.RegionalHostedZoneId
+        EvaluateTargetHealth: true
+
+Outputs:
+  EndpointUrl:
+    Description: 'REST regional endpoint URL'
+    Value: !Sub 'https://${ApiRegional}.execute-api.${AWS::Region}.amazonaws.com/${Stage}'
+  CustomDomainNameEndpoint:
+    Description: Custom Domain Name endpoint
+    Value: !Sub "https://${DomainName}"
+  AlarmRegion:
+    Condition: isSecondaryRegion
+    Description: 'The aws region where the alarm is created on'
+    Value: !Ref "AWS::Region"
+  AlarmName:
+    Condition: isSecondaryRegion
+    Description: 'The name of the created alarm'
+    Value: !Ref FailoverToSecondaryAlarm
