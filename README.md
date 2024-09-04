@@ -92,31 +92,49 @@ Then follow the steps below, in this exact order. It is important to deploy our 
 
 ## Testing
 
-Once the stack is deployed on each region, get the API endpoint from the EndpointUrl output parameter.
-Paste the URL in a browser, or in Postman, or using the curl command.
-Eg: 
-```bash
-curl https://aabbccddee.execute-api.us-east-1.amazonaws.com/prod
+After deploying the application on both primary and secondary regions, traffic will initially be routed to the primary region only. You will then use our test scripts to send continuous traffic to the demo api and trigger failover and failback.
+
+Edit the `bin/test.sh` file on line 3 to point to your domain name (example.com). Then give that file execution permissions and run it:
+```
+chmod +x bin/*.sh
+./bin/test.sh
 ```
 
-You should see a response similar to:
-```json
-{"service": "stop-demo", "region": "your-selected-Region"}
+This script will send an HTTP request to your endpoint every 5 seconds. Initially all requests will be sent to the primary region (us-east-1 in this example):
+
+![alt text](images/test1.jpg)
+
+Open a new terminal window, make sure to go to the root folder where you downloaded this project to (multi-region-failover-pattern-standby-takes-over-primary) and trigger the failover:
+
+```
+./bin/failover-to-secondary.sh
 ```
 
-You can do the same for both stacks on the primary and secondary regions.
+The command output should be similar to the one below:
 
-Now test that your regional service is accessible via your Route53 domain.
-You can get that URL from the **CustomDomainNameEndpoint** output parameter.
-Eg: 
-```bash
-curl https://example.com
+![alt text](images/failover.jpg)
+
+After a few minutes, you should see the traffic being routed to your secondary region:
+
+![alt text](images/test2.jpg)
+
+Open a new terminal window, make sure to go to the root folder where you downloaded this project to (multi-region-failover-pattern-standby-takes-over-primary) and trigger the failback:
+
+```
+./bin/failback-to-primary.sh
 ```
 
-You should see a response similar to:
-```json
-{"service": "stop-demo", "region": "your-primary-Region"}
-```
+The command output should be similar to the one below:
+
+![alt text](images/failback.jpg)
+
+After a few minutes, you should see the traffic being routed back to your primary region:
+
+![alt text](images/test3.jpg)
+
+If you check the Route 53 health check status chart on the AWS Console, you should see something like this:
+
+![alt text](images/hc.jpg)
 
 ## Cleanup
  
