@@ -45,7 +45,7 @@ Then follow the steps below, in this exact order. It is important to deploy our 
     * **AlarmRegion:** Just hit enter to skip, as this parameter is only needed on the primay region.
     * **AlarmName:** Just hit enter to skip, as this parameter is only needed on the primay region.
     * **PublicHostedZoneId:** You must have a public hosted zone in Route 53 with your domain name (i.e. example.com). Enter the Hosted Zone Id for this hosted zone.
-    * **DomainName:** Enter your custom domain name (i.e. stop.example.com).
+    * **DomainName:** Enter your custom domain name (i.e. example.com).
     * **CertificateArn** You must have an ACM certificate that covers your custom domain namespace (i.e. *.example.com) on the Region your are deploying this stack. Enter the ARN for this certificate here. **Make sure you are getting the certificate arn for the right Region**.
     * **Stage:** Enter the name of the stage within your API Gateway that you would like to map to your custom domain name.
     * **FailoverType:** Accept the defaults and use **SECONDARY** here.
@@ -67,7 +67,7 @@ Then follow the steps below, in this exact order. It is important to deploy our 
     * **AlarmRegion:** Choose the region you deployed the secondary stack on. For example, us-west-2.
     * **AlarmName:** Choose the exact value for the **AlarmName** key on the Outputs of your deployment on the secondary region (step 3 above).
     * **PublicHostedZoneId:** You must have a public hosted zone in Route 53 with your domain name (i.e. example.com). Enter the Hosted Zone Id for this hosted zone.
-    * **DomainName:** Enter your custom domain name (i.e. stop.example.com).
+    * **DomainName:** Enter your custom domain name (i.e. example.com).
     * **CertificateArn** You must have an ACM certificate that covers your custom domain namespace (i.e. *.example.com) on the Region your are deploying this stack. Enter the ARN for this certificate here. **Make sure you are getting the certificate arn for the right Region**.
     * **Stage:** Enter the name of the stage within your API Gateway that you would like to map to your custom domain name.
     * **FailoverType:** Accept the defaults and use **PRIMARY** here.
@@ -107,7 +107,7 @@ Now test that one of your Regional services is accessible via your Route53 domai
 You can get that URL from the **CustomDomainNameEndpoint** output parameter.
 Eg: 
 ```bash
-curl https://stop.example.com
+curl https://example.com
 ```
 
 You should see a response similar to:
