@@ -1,26 +1,32 @@
 # Multi-Region Failover Pattern: Sandby Takes Over Primary (STOP)
+In a disaster recovery (DR) scenario, a simple and effective approach is required to mitigate failures and subsequently resume normal operations. For this process to be efficient and reliable, it must be straightforward, involve minimal steps, and be practiced regularly. Many companies leverage DNS record updates for failover purposes. This demo describes the utilization of DNS updates for effective DR and highlights the principles and best practices that should be adopted when following this approach.
 
-In a DR scenario, you need a simple and effective approach to mitigate failures and then return to normal operations. To be fast and reliable, this process must be straightforward, require minimal steps, and be practiced regularly. To failover, many companies change their DNS records. This demo describes how to use updates to DNS for effective disaster recovery, and highlights principles and best practices you should adopt when following this approach.
+This demonstration showcases a pattern referred to as "standby takes over primary" (STOP). This strategy relies on a healthy standby region and application. With this solution, a resource in the standby region is utilized to control the failover process. This enables the initiation of a failover without depending on any resources in the primary region or Route 53 control plane operations for changing DNS records.
 
-This demo showcases a pattern that we call "standby takes over primary" (STOP). This strategy depends on a healthy standby Region and application. With this solution, you use a resource (a health check) in the standby Region to control the failover. This allows you to initiate a failover without depending on any resources in the primary Region.
-
-At a minimum, this solution uses one health check, which checks the status of a resource in the standby Region. Let’s look at an example of this architecture.
+At a minimum, this solution uses one health check, which checks the status of a resource in the standby Region. Let’s examine an example of this architecture.
 
 ![alt text](images/diagram.jpg)
 
-We start with a Route 53 health check, HC-Initiate-Disaster-Recovery, that is associated with the Route 53 DNS record for our application in the primary Region (Region A). This health check looks for a condition that enables an operator (or automation) to declare the primary application “unhealthy” and initiates failover. The condition is something simple; in our case, we use a CloudWatch Alarm that monitors the StopPatten/FailoverToSecondary.
+We start with a Route 53 health check, HC-Initiate-Disaster-Recovery, that is associated with the Route 53 DNS record for our application in the primary Region (Region A). This health check looks for a condition that enables an operator (or automation) to declare the primary region “unhealthy” and initiates failover. The condition is straightforward; in our case, we use a CloudWatch Alarm on the secondary region that monitors the StopPatten/FailoverToSecondary metric.
 
-## Route 53 Health Check
-
-TODO: Explain HC scenarios.
+Here is the alarm configuration:
 
 ![alt text](images/alarm-config.jpg)
 
-TODO: Explain HC scenarios.
+The HC-Initiate-Disaster-Recovery health check is configured as follows:
 
 ![alt text](images/hc-config.jpg)
 
-TODO: Explain HC scenarios.
+For more details, please refer to our AWS blog post (WIP).
+
+## How it works
+
+This stack will deploy an Amazon API Gateway Rest Regional API with a Lambda integration. The AWS Lambda function is written in Python3.9. The function returns a small message with the service name and the Region it is deployed at. The inline code of the lambda is written in the template itself.
+
+That API will be deployed both on the primary and secondary regions. If an issue with the primary region occurs, you can publish a specific CloudWatch metric into the secondary region, changing the Route 53 health check status, then shifting traffic to the secondary region. 
+
+This example demonstrates the failover only and does not encompass authentication and data for the multiple regions.
+
 
 ## Deployment instructions
 
@@ -32,14 +38,19 @@ Then follow the steps below, in this exact order. It is important to deploy our 
 
 1. Create a new directory, navigate to that directory in a terminal and clone the GitHub repository:
     ``` 
-    git clone https://github.com/aws-samples/multi-region-failover-pattern-stop
+    git clone https://github.com/aws-samples/multi-region-failover-pattern-standby-takes-over-primary.git
+    
     ```
-
-2. From the command line, use AWS SAM to deploy the AWS resources for the stack as specified in the template.yml file on the secondary Region:
+2. Change directory to the project you just cloned:
+    ``` 
+    cd multi-region-failover-pattern-standby-takes-over-primary
+    
+    ```
+3. From the command line, use AWS SAM to deploy the AWS resources for the stack as specified in the template.yml file on the secondary Region:
     ```
     sam deploy --guided --config-env secondary
     ```
-3. During the prompts:
+4. During the prompts:
     * **Stack Name:** Enter a stack name. You can just hit enter if you want to accept the default value.
     * **AWS Region:** Enter the desired secondary AWS Region. This stack has been tested with both us-east-1 and us-west-2.
     * **AlarmRegion:** Just hit enter to skip, as this parameter is only needed on the primay region.
@@ -57,11 +68,11 @@ Then follow the steps below, in this exact order. It is important to deploy our 
 
     Once you have run `sam deploy --guided --config-env secondary` mode once and saved arguments to a configuration file (samconfig.toml), you can use `sam deploy --config-env secondary` in future to use these defaults.
 
-4.  From the command line, use AWS SAM to deploy the AWS resources for the stack as specified in the template.yml file on the primary Region:
+5.  From the command line, use AWS SAM to deploy the AWS resources for the stack as specified in the template.yml file on the primary Region:
     ```
     sam deploy --guided --config-env primary
     ```
-5. During the prompts:
+6. During the prompts:
     * **Stack Name:** Enter a stack name. You can just hit enter if you want to accept the default value.
     * **AWS Region:** Enter the desired primary AWS Region. This stack has been tested with both us-east-1 and us-west-2.
     * **AlarmRegion:** Choose the region you deployed the secondary stack on. For example, us-west-2.
@@ -78,14 +89,6 @@ Then follow the steps below, in this exact order. It is important to deploy our 
     Note the outputs from the SAM deployment process. These contain details which are used for testing.
 
     Once you have run `sam deploy --guided --config-env primary` mode once and saved arguments to a configuration file (samconfig.toml), you can use `sam deploy --config-env primary` in future to use these defaults.
-
-## How it works
-
-This stack will deploy an Amazon API Gateway Rest Regional API with a Lambda integration. The AWS Lambda function is written in Python3.9. The function returns a small message with the service name and the Region it is deployed at. The inline code of the lambda is written in the template itself.
-
-That API will be deployed both on the primary and secondary regions. If an issue with the primary region occurs, you can publish a specific CloudWatch metric into the secondary region, changing the Route 53 health check status, then shifting traffic to the secondary region. 
-
-This example demonstrates the failover only and does not encompass authentication and data for the multiple regions.
 
 ## Testing
 
