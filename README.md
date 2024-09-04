@@ -106,7 +106,7 @@ You should see a response similar to:
 
 You can do the same for both stacks on the primary and secondary regions.
 
-Now test that one of your Regional services is accessible via your Route53 domain.
+Now test that your regional service is accessible via your Route53 domain.
 You can get that URL from the **CustomDomainNameEndpoint** output parameter.
 Eg: 
 ```bash
