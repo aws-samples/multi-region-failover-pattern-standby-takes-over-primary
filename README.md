@@ -1,4 +1,4 @@
-# Multi-Region Failover Pattern: Sandby Takes Over Primary (STOP)
+# Multi-Region Failover Pattern: Standby Takes Over Primary (STOP)
 In a disaster recovery (DR) scenario, a simple and effective approach is required to mitigate failures and subsequently resume normal operations. For this process to be efficient and reliable, it must be straightforward, involve minimal steps, and be practiced regularly. Many companies leverage DNS record updates for failover purposes. This demo describes the utilization of a CloudWatch metric and alarm to change a Route 53 health check state, triggering failover or failbacks.
 
 This repo showcases a pattern referred to as "standby takes over primary" (STOP). This strategy relies on a healthy standby region and application. With this solution, a resource in the standby region is utilized to control the failover process. This enables the initiation of a failover without depending on any resources in the primary region or Route 53 control plane operations for changing DNS records.
