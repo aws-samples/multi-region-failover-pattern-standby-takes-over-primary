@@ -4,9 +4,8 @@ url=https://example.com
 
 while true; do
   current_time=$(date +"%T")
-  echo "[$current_time] Sending requests ..."
-  curl "$url"
-  echo -e ""
-  echo -e "----------------------------------------"
+  RESP=$(curl -s $url)
+  echo -e "[$current_time] $RESP"
+
   sleep 5
 done
