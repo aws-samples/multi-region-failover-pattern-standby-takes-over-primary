@@ -103,7 +103,7 @@ chmod +x bin/*.sh
 
 This script will send an HTTP request to your endpoint every 5 seconds. Initially all requests will be sent to the primary Region (us-east-1 in this example):
 
-![alt text](images/test1.jpg)
+<img src="images/test1.jpg" alt="Alt Text" style="width:60%; height:auto;">
 
 Open a new terminal window, make sure to go to the root folder where you downloaded this project to (multi-Region-failover-pattern-standby-takes-over-primary) and run this script to monitor the CloudWatch alarm state:
 
@@ -113,7 +113,8 @@ Open a new terminal window, make sure to go to the root folder where you downloa
 
 The command output should be similar to the one below:
 
-![alt text](images/alarm1.jpg)
+
+<img src="images/alarm1.jpg" alt="Alt Text" style="width:30%; height:auto;">
 
 Open a new terminal window, make sure to go to the root folder where you downloaded this project to (multi-Region-failover-pattern-standby-takes-over-primary) and trigger the failover:
 
@@ -123,15 +124,15 @@ Open a new terminal window, make sure to go to the root folder where you downloa
 
 The command output should be similar to the one below:
 
-![alt text](images/failover.jpg)
+<img src="images/failover.jpg" alt="Alt Text" style="width:50%; height:auto;">
 
 After a few minutes, you should see the alarm state change to ALARM:
 
-![alt text](images/alarm2.jpg)
+<img src="images/alarm2.jpg" alt="Alt Text" style="width:30%; height:auto;">
 
 After a few minutes, you should see the traffic being routed to your secondary Region:
 
-![alt text](images/test2.jpg)
+<img src="images/test2.jpg" alt="Alt Text" style="width:60%; height:auto;">
 
 Open a new terminal window, make sure to go to the root folder where you downloaded this project to (multi-Region-failover-pattern-standby-takes-over-primary) and trigger the failback:
 
@@ -141,15 +142,15 @@ Open a new terminal window, make sure to go to the root folder where you downloa
 
 The command output should be similar to the one below:
 
-![alt text](images/failback.jpg)
+<img src="images/failback.jpg" alt="Alt Text" style="width:50%; height:auto;">
 
 After a few minutes, you should see the alarm state change to OK:
 
-![alt text](images/alarm3.jpg)
+<img src="images/alarm3.jpg" alt="Alt Text" style="width:30%; height:auto;">
 
 After a few minutes, you should see the traffic being routed back to your primary Region:
 
-![alt text](images/test3.jpg)
+<img src="images/test3.jpg" alt="Alt Text" style="width:60%; height:auto;">
 
 ## Cleanup
  
